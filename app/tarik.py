@@ -31,7 +31,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime, timezone
 
-from . import config
+from . import berkas, config
 from .i18n import pesan
 
 SUMBER = {
@@ -353,11 +353,7 @@ def _baca_list(path: str) -> list[dict]:
 
 
 def _tulis_atomik(path: str, data) -> None:
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, path)
+    berkas.tulis_json_atomik(path, data, indent=2)
 
 
 def _kunci(d: dict) -> tuple:

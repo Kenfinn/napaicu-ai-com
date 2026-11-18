@@ -27,7 +27,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime
 
-from . import config
+from . import berkas, config
 from .tarik import Diblokir, _ambil_json
 
 CACHE_DIR = os.path.join(config.DATA_DIR, "pasar")
@@ -116,17 +116,22 @@ def _baca_cache(nama: str) -> tuple[object | None, float | None]:
     p = _path(nama)
     if not os.path.exists(p):
         return None, None
-    with open(p, encoding="utf-8") as f:
-        isi = json.load(f)
+    try:
+        with open(p, encoding="utf-8") as f:
+            isi = json.load(f)
+    except (OSError, ValueError) as e:
+        # Cache rusak = anggap tidak ada, supaya _dengan_cache mengambil ulang dan menimpanya.
+        # Galat ini tidak boleh naik: menu samping dan pipeline membaca cache ini di setiap
+        # halaman, jadi satu berkas rusak membuat seluruh situs 500 dan tidak pulih sendiri.
+        print(f"[pasar] cache {nama} rusak, diabaikan: {type(e).__name__}: {e}", flush=True)
+        return None, None
+    if not isinstance(isi, dict):
+        return None, None
     return isi.get("data"), isi.get("waktu")
 
 
 def _tulis_cache(nama: str, data) -> None:
-    os.makedirs(CACHE_DIR, exist_ok=True)
-    tmp = _path(nama) + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump({"waktu": time.time(), "data": data}, f, ensure_ascii=False)
-    os.replace(tmp, _path(nama))
+    berkas.tulis_json_atomik(_path(nama), {"waktu": time.time(), "data": data})
 
 
 def _dengan_cache(nama: str, ttl: int, ambil):

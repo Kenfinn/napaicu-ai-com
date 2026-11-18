@@ -24,7 +24,7 @@ import os
 import threading
 from datetime import datetime, timezone
 
-from . import config
+from . import berkas, config
 
 FILE = os.path.join(config.DATA_DIR, "umpan_balik.json")
 DASAR = config.TRIAGE_THRESHOLD
@@ -66,11 +66,7 @@ def baca() -> dict:
 
 def _tulis(data: dict) -> None:
     data["riwayat"] = data["riwayat"][-RIWAYAT_MAKS:]
-    os.makedirs(os.path.dirname(FILE), exist_ok=True)
-    tmp = FILE + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    os.replace(tmp, FILE)
+    berkas.tulis_json_atomik(FILE, data, indent=2)
 
 
 def _batasi(x: float) -> float:

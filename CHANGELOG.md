@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Fix: a corrupt market cache made every page return 500 (seen on feaf.web.id, 18 Nov 2026).
+  Two threads wrote the TWSE price cache through the same fixed `harga_twse.json.tmp`, leaving
+  valid JSON followed by leftover bytes ("Extra data"). The side menu and the pipeline read that
+  cache on every page without catching the error, and it was never fetched again.
+- Market caches (`app/pasar.py`): a corrupt cache file is treated as missing, logged, fetched
+  again and overwritten, so the site recovers on its own.
+- JSON files are written through `app/berkas.py` (`tulis_json_atomik`), which gives each writer
+  its own temporary file before `os.replace`. Used by the market caches, the filing store and
+  pull status (`app/tarik.py`), and the triage thresholds (`app/umpan_balik.py`).
+- Tests: `tests/test_berkas_atomik.py` (11 tests).
+
 ## 1.2.0 · 14 Nov 2026
 
 - English API paths: `/health`, `/check`, `/api/alerts`, `/api/traces/{id}`,
